@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<!-- saved from url=(0084)file:///C:/Users/romilson.oliveira/Documents/programando%20em%20python/Contrato.html -->
+<html lang="pt-BR"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contrato de Prestação de Serviços para Eventos</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-container {
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #contract {
+            background-color: white;
+            padding: 30px;
+            margin-top: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+        .contract-title {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        .contract-section {
+            margin-bottom: 20px;
+        }
+        .signature-line {
+            margin-top: 50px;
+            border-top: 1px solid #333;
+            width: 300px;
+            text-align: center;
+            padding-top: 10px;
+        }
+        .print-btn {
+            margin-top: 20px;
+            background-color: #27ae60;
+        }
+        .print-btn:hover {
+            background-color: #219653;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1>Formulário de Contratação Central Tech Eventos</h1>
+        
+        <div class="form-group">
+            <label for="nome">Nome Completo:</label>
+            <input type="text" id="nome" required="">
+        </div>
+        
+        <div class="form-group">
+            <label for="evento">Tipo de Evento:</label>
+            <select id="evento" required="">
+                <option value="">Selecione...</option>
+                <option value="Casamento">Casamento</option>
+                <option value="Aniversário">Aniversário</option>
+                <option value="Festa Infantil">Festa Infantil</option>
+                <option value="Evento Corporativo">Evento Corporativo</option>
+                <option value="Formatura">Formatura</option>
+                <option value="Outro">Outro</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="convidados">Número de Convidados:</label>
+            <input type="number" id="convidados" min="1" required="">
+        </div>
+        
+        <div class="form-group">
+            <label for="horas">Duração do Evento (horas):</label>
+            <input type="number" id="horas" min="1" required="">
+        </div>
+        
+        <div class="form-group">
+            <label for="endereco">Endereço do Evento:</label>
+            <input type="text" id="endereco" required="">
+        </div>
+        
+        <div class="form-group">
+            <label for="email">E-mail:</label>
+            <input type="email" id="email" required="">
+        </div>
+        
+        <div class="form-group">
+            <label for="servico">Serviço Contratado:</label>
+            <select id="servico" required="">
+                <option value="">Selecione...</option>
+                <option value="DJ">DJ</option>
+                <option value="Animadora Infantil">Animadora Infantil</option>
+                <option value="Fotógrafo">Fotógrafo</option>
+                <option value="Música ao Vivo">Música ao Vivo</option>
+                <option value="Outro">Outro</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="valor">Valor Total (R$):</label>
+            <input type="number" id="valor" min="0" step="0.01" required="">
+        </div>
+        
+        <button onclick="gerarContrato()">Gerar Contrato</button>
+    </div>
+    
+    <div id="contract">
+        <h2 class="contract-title">CONTRATO DE PRESTAÇÃO DE SERVIÇOS</h2>
+        
+        <div class="contract-section">
+            <p>Pelo presente instrumento particular, de um lado:</p>
+            <p><strong>CONTRATANTE:</strong> <span id="contratante-nome"></span></p>
+            <p>E de outro lado:</p>
+            <p><strong>CONTRATADA:</strong> Romilson Barreto dos Santos Oliveira, CPF 78233429520, com sede na Rua Marquês de Santana 94, Liberdade
+        
+        </p><div class="contract-section">
+            <p><strong>CLÁUSULA PRIMEIRA - DO OBJETO</strong></p>
+            <p>A CONTRATADA se obriga a prestar serviços de <span id="contrato-servico"></span> para o evento do tipo <span id="contrato-evento"></span>, conforme especificado a seguir:</p>
+            <ul>
+                <li>Local do evento: <span id="contrato-endereco"></span></li>
+                <li>Data: <span id="contrato-data"></span></li>
+                <li>Duração: <span id="contrato-horas"></span> horas</li>
+                <li>Número estimado de convidados: <span id="contrato-convidados"></span> pessoas</li>
+            </ul>
+        </div>
+        
+        <div class="contract-section">
+            <p><strong>CLÁUSULA SEGUNDA - DO VALOR E FORMA DE PAGAMENTO</strong></p>
+            <p>O valor total dos serviços contratados é de R$ <span id="contrato-valor"></span> (<span id="contrato-valor-extenso"></span>), a ser pago da seguinte forma:</p>
+            <p>50% no ato da assinatura deste contrato e 50% no dia do evento.</p>
+        </div>
+        
+        <div class="contract-section">
+            <p><strong>CLÁUSULA TERCEIRA - DAS OBRIGAÇÕES DAS PARTES</strong></p>
+            <p>3.1. São obrigações da CONTRATANTE:</p>
+            <ul>
+                <li>Fornecer todas as informações necessárias para a execução dos serviços;</li>
+                <li>Garantir infraestrutura adequada para a realização dos serviços;</li>
+                <li>Efetuar os pagamentos nos prazos estabelecidos.</li>
+            </ul>
+            
+            <p>3.2. São obrigações da CONTRATADA:</p>
+            <ul>
+                <li>Executar os serviços com profissionalismo e qualidade;</li>
+                <li>Comparecer no local e horário combinados;</li>
+                <li>Cumprir com todas as especificações acordadas.</li>
+            </ul>
+        </div>
+        
+        <div class="contract-section">
+            <p><strong>CLÁUSULA QUARTA - DO PRAZO</strong></p>
+            <p>O presente contrato vigorará a partir da data de sua assinatura até a completa execução dos serviços.</p>
+        </div>
+        
+        <div class="contract-section">
+            <p><strong>CLÁUSULA QUINTA - DAS DISPOSIÇÕES GERAIS</strong></p>
+            <p>Quaisquer alterações neste contrato deverão ser feitas por escrito e assinadas por ambas as partes.</p>
+            <p>E-mail para contato: <span id="contrato-email"></span></p>
+        </div>
+        
+        <div class="contract-section">
+            <p>E por estarem assim justos e contratados, firmam o presente contrato em 02 (duas) vias de igual teor e forma, para que produza seus efeitos legais.</p>
+            
+            <p>São Paulo, <span id="contrato-data-assinatura"></span>.</p>
+            
+            <div style="display: flex; justify-content: space-between; margin-top: 50px;">
+                <div>
+                    <div class="signature-line">CONTRATANTE</div>
+                    <p><span id="contratante-assinatura"></span></p>
+                </div>
+                <div>
+                    <div class="signature-line">CONTRATADA</div>
+                    <p>Central Tech Eventos</p>
+                </div>
+            </div>
+        </div>
+        
+        <button class="print-btn" onclick="window.print()">Imprimir Contrato</button>
+    </div>
+
+    <script>
+        function gerarContrato() {
+            // Coletar dados do formulário
+            const nome = document.getElementById('nome').value;
+            const evento = document.getElementById('evento').value;
+            const convidados = document.getElementById('convidados').value;
+            const horas = document.getElementById('horas').value;
+            const endereco = document.getElementById('endereco').value;
+            const email = document.getElementById('email').value;
+            const servico = document.getElementById('servico').value;
+            const valor = parseFloat(document.getElementById('valor').value).toFixed(2);
+            
+            // Validar campos
+            if (!nome || !evento || !convidados || !horas || !endereco || !email || !servico || !valor) {
+                alert('Por favor, preencha todos os campos!');
+                return;
+            }
+            
+            // Preencher contrato
+            document.getElementById('contratante-nome').textContent = nome;
+            document.getElementById('contrato-servico').textContent = servico;
+            document.getElementById('contrato-evento').textContent = evento;
+            document.getElementById('contrato-endereco').textContent = endereco;
+            document.getElementById('contrato-horas').textContent = horas;
+            document.getElementById('contrato-convidados').textContent = convidados;
+            document.getElementById('contrato-valor').textContent = valor;
+            document.getElementById('contrato-email').textContent = email;
+            document.getElementById('contratante-assinatura').textContent = nome;
+            
+            // Formatar data
+            const hoje = new Date();
+            const options = { day: '2-digit', month: 'long', year: 'numeric' };
+            document.getElementById('contrato-data').textContent = hoje.toLocaleDateString('pt-BR');
+            document.getElementById('contrato-data-assinatura').textContent = hoje.toLocaleDateString('pt-BR', options);
+            
+            // Converter valor para extenso (simplificado)
+            document.getElementById('contrato-valor-extenso').textContent = converterValorExtenso(valor);
+            
+            // Mostrar contrato
+            document.getElementById('contract').style.display = 'block';
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+        
+        function converterValorExtenso(valor) {
+            // Esta é uma versão simplificada - em aplicação real, use uma biblioteca específica
+            const unidades = ["", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove"];
+            const dezenas = ["", "dez", "vinte", "trinta", "quarenta", "cinquenta", "sessenta", "setenta", "oitenta", "noventa"];
+            const centenas = ["", "cento", "duzentos", "trezentos", "quatrocentos", "quinhentos", "seiscentos", "setecentos", "oitocentos", "novecentos"];
+            
+            const partes = valor.split('.');
+            const reais = parseInt(partes[0]);
+            const centavos = partes.length > 1 ? parseInt(partes[1]) : 0;
+            
+            let extenso = "";
+            
+            if (reais === 0 && centavos === 0) {
+                return "zero reais";
+            }
+            
+            if (reais > 0) {
+                if (reais === 1) {
+                    extenso += "um real";
+                } else if (reais < 10) {
+                    extenso += unidades[reais] + " reais";
+                } else if (reais < 20) {
+                    const especiais = ["dez", "onze", "doze", "treze", "quatorze", "quinze", "dezesseis", "dezessete", "dezoito", "dezenove"];
+                    extenso += especiais[reais - 10] + " reais";
+                } else if (reais < 100) {
+                    const dezena = Math.floor(reais / 10);
+                    const unidade = reais % 10;
+                    extenso += dezenas[dezena];
+                    if (unidade > 0) {
+                        extenso += " e " + unidades[unidade];
+                    }
+                    extenso += " reais";
+                } else {
+                    // Simplificação para valores acima de 100
+                    extenso += reais + " reais";
+                }
+            }
+            
+            if (centavos > 0) {
+                if (reais > 0) {
+                    extenso += " e ";
+                }
+                if (centavos === 1) {
+                    extenso += "um centavo";
+                } else {
+                    if (centavos < 10) {
+                        extenso += unidades[centavos];
+                    } else if (centavos < 20) {
+                        const especiais = ["dez", "onze", "doze", "treze", "quatorze", "quinze", "dezesseis", "dezessete", "dezoito", "dezenove"];
+                        extenso += especiais[centavos - 10];
+                    } else {
+                        const dezena = Math.floor(centavos / 10);
+                        const unidade = centavos % 10;
+                        extenso += dezenas[dezena];
+                        if (unidade > 0) {
+                            extenso += " e " + unidades[unidade];
+                        }
+                    }
+                    extenso += " centavos";
+                }
+            }
+            
+            return extenso;
+        }
+    </script>
+
+</div></body></html>
