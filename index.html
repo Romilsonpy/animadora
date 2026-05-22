@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animadora Infantil - Sistema de Eventos</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary-pink: #FF69B4;
+            --primary-purple: #9B59B6;
+            --primary-blue: #3498DB;
+            --primary-yellow: #F1C40F;
+            --primary-green: #2ECC71;
+            --primary-orange: #E67E22;
+            --primary-white: #ffffff;
+            --primary-black: #2c3e50;
+        }
+
+        body {
+            font-family: 'Comic Neue', 'Segoe UI', 'Comic Sans MS', cursive;
+            background: linear-gradient(135deg, #FFE4E1 0%, #FFF0F5 50%, #E8F4FD 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Telas de Overlay */
+        .first-access-overlay, .login-overlay, .license-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #FF69B4 0%, #9B59B6 50%, #3498DB 100%);
+            z-index: 2000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .first-access-box, .login-box, .license-box {
+            background: var(--primary-white);
+            border-radius: 30px;
+            padding: 40px;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: bounceIn 0.6s ease;
+            border: 3px solid var(--primary-yellow);
+        }
+
+        @keyframes bounceIn {
+            0% { opacity: 0; transform: scale(0.8); }
+            50% { opacity: 0.5; transform: scale(1.05); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .first-access-box .logo-icon, .login-box .logo-icon, .license-box .logo-icon { font-size: 4em; margin-bottom: 15px; animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .first-access-box h2, .login-box h2, .license-box h2 { color: var(--primary-pink); margin-bottom: 10px; font-size: 28px; }
+        .first-access-box p, .login-box p, .license-box p { color: #666; margin-bottom: 20px; font-size: 14px; }
+
+        .login-input, .first-input {
+            width: 100%;
+            padding: 14px;
+            margin: 10px 0;
+            border: 2px solid #FFE4E1;
+            border-radius: 50px;
+            font-size: 16px;
+            background: #FFF9F9;
+        }
+        .login-input:focus, .first-input:focus {
+            outline: none;
+            border-color: var(--primary-pink);
+            box-shadow: 0 0 0 3px rgba(255,105,180,0.2);
+        }
+        .login-btn, .first-btn, .btn-license {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--primary-pink), var(--primary-purple));
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+        .login-btn:hover, .first-btn:hover, .btn-license:hover {
+            transform: scale(1.02);
+            box-shadow: 0 5px 20px rgba(255,105,180,0.4);
+        }
+        .login-error, .first-error { color: #e74c3c; margin-top: 15px; font-size: 14px; display: none; }
+        
+        .planos-container { display: flex; flex-direction: column; gap: 15px; margin: 20px 0; }
+        .plano-card { background: #FFF9F9; border-radius: 20px; padding: 15px; border: 2px solid var(--primary-pink); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .plano-info { text-align: left; }
+        .plano-nome { font-weight: bold; font-size: 18px; color: var(--primary-purple); }
+        .plano-preco { font-size: 22px; font-weight: bold; color: var(--primary-pink); }
+        .plano-duracao { font-size: 12px; color: #888; }
+        .btn-whatsapp-plano { background: #25D366; color: white; border: none; padding: 10px 20px; border-radius: 50px; cursor: pointer; font-weight: bold; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s ease; }
+        .btn-whatsapp-plano:hover { transform: scale(1.02); box-shadow: 0 3px 10px rgba(0,0,0,0.2); }
+
+        .main-content { display: none; }
+        .main-content.visible { display: block; }
+        .container { max-width: 1400px; margin: 0 auto; }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #FF69B4 0%, #9B59B6 50%, #3498DB 100%);
+            border-radius: 40px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            position: relative;
+            border: 2px solid var(--primary-yellow);
+        }
+        .timer-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(0,0,0,0.7);
+            color: var(--primary-yellow);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 10;
+            border: 1px solid var(--primary-yellow);
+        }
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.3);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+        .logout-btn:hover { background: var(--primary-pink); transform: scale(1.05); }
+        .logo-container { display: flex; align-items: center; justify-content: center; gap: 20px; flex-wrap: wrap; }
+        .logo-placeholder { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-yellow), #FFA500); display: flex; align-items: center; justify-content: center; font-size: 40px; border: 3px solid white; }
+        .logo-text h1 { font-size: 2.2em; background: linear-gradient(135deg, #FFD700, #FFA500, #FF69B4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .perfil-info { margin-top: 10px; padding: 10px 20px; background: rgba(255,255,255,0.25); border-radius: 50px; display: inline-flex; flex-wrap: wrap; gap: 15px; backdrop-filter: blur(5px); }
+        .perfil-info span { color: white; font-size: 14px; font-weight: bold; }
+        .balloon-animation { display: flex; gap: 5px; margin-top: 15px; justify-content: center; }
+        .balloon { width: 30px; height: 40px; background: radial-gradient(circle at 30% 30%, #fff, #FF69B4); border-radius: 50%; animation: floatBalloon 2s ease-in-out infinite; position: relative; }
+        .balloon::after { content: ''; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 1px; height: 10px; background: #8B4513; }
+        .balloon:nth-child(1) { background: radial-gradient(circle at 30% 30%, #fff, #FF69B4); animation-delay: 0s; }
+        .balloon:nth-child(2) { background: radial-gradient(circle at 30% 30%, #fff, #F1C40F); animation-delay: 0.3s; }
+        .balloon:nth-child(3) { background: radial-gradient(circle at 30% 30%, #fff, #3498DB); animation-delay: 0.6s; }
+        @keyframes floatBalloon { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+        .menu { background: rgba(255,255,255,0.95); border-radius: 30px; padding: 20px; margin-bottom: 20px; border: 2px solid var(--primary-yellow); }
+        .menu-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 15px; }
+        .btn { padding: 12px 20px; border: none; border-radius: 50px; cursor: pointer; font-size: 14px; font-weight: bold; transition: all 0.3s ease; }
+        .btn-primary { background: linear-gradient(135deg, var(--primary-pink), var(--primary-purple)); color: white; }
+        .btn-success { background: linear-gradient(135deg, var(--primary-green), #27AE60); color: white; }
+        .btn-info { background: linear-gradient(135deg, var(--primary-blue), #2980B9); color: white; }
+        .btn-warning { background: linear-gradient(135deg, var(--primary-yellow), #F39C12); color: #2c3e50; }
+        .btn-danger { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; }
+        .btn-secondary { background: linear-gradient(135deg, #95A5A6, #7F8C8D); color: white; }
+        .btn-contract { background: linear-gradient(135deg, var(--primary-orange), #D35400); color: white; }
+        .btn:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+
+        .dashboard { background: rgba(255,255,255,0.95); border-radius: 30px; padding: 20px; margin-bottom: 20px; border: 2px solid var(--primary-yellow); }
+        .dashboard-title { font-size: 1.5em; color: var(--primary-pink); margin-bottom: 20px; border-left: 4px solid var(--primary-yellow); padding-left: 15px; }
+        .agenda-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
+        .agenda-card { background: linear-gradient(135deg, #fff, #FFF9F9); border-radius: 25px; overflow: hidden; border: 2px solid var(--primary-pink); transition: transform 0.3s ease; }
+        .agenda-card:hover { transform: translateY(-5px); }
+        .agenda-header { background: linear-gradient(135deg, var(--primary-pink), var(--primary-purple)); color: white; padding: 12px 15px; font-weight: bold; }
+        .agenda-body { padding: 15px; }
+        .agenda-date { font-weight: bold; color: var(--primary-pink); }
+        .agenda-badge { display: inline-block; padding: 2px 12px; border-radius: 20px; font-size: 0.7em; font-weight: bold; }
+        .badge-confirmado { background: var(--primary-green); color: white; }
+        .badge-agendado { background: var(--primary-yellow); color: #744210; }
+
+        .content { background: rgba(255,255,255,0.95); border-radius: 30px; padding: 20px; margin-bottom: 20px; display: none; border: 2px solid var(--primary-yellow); }
+        .content.active { display: block; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .form-group { margin-bottom: 20px; }
+        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--primary-purple); }
+        input, select, textarea { width: 100%; padding: 12px; border: 2px solid #FFE4E1; border-radius: 25px; font-size: 14px; background: #FFF9F9; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary-pink); }
+
+        .logo-upload { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; background: #FFF9F9; padding: 15px; border-radius: 25px; border: 2px dashed var(--primary-pink); }
+        .logo-preview-placeholder { width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, #FFE4E1, #FFB6C1); display: flex; align-items: center; justify-content: center; font-size: 40px; border: 3px solid var(--primary-yellow); }
+        .file-input-label { background: linear-gradient(135deg, var(--primary-pink), var(--primary-purple)); color: white; padding: 10px 20px; border-radius: 50px; cursor: pointer; display: inline-block; }
+
+        /* Tabela de Eventos */
+        .table-container { overflow-x: auto; margin-top: 20px; border-radius: 20px; }
+        table { width: 100%; border-collapse: collapse; border-radius: 20px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #FFE4E1; vertical-align: middle; }
+        th { background: linear-gradient(135deg, var(--primary-pink), var(--primary-purple)); color: white; font-weight: 600; font-size: 14px; }
+        tr { transition: background 0.2s ease; }
+        tr:hover { background: #FFF0F5; }
+        td { font-size: 13px; color: #2c3e50; }
+        .table-actions { display: flex; gap: 5px; flex-wrap: wrap; }
+        .btn-small { padding: 5px 10px; font-size: 11px; border-radius: 20px; border: none; cursor: pointer; font-weight: bold; transition: all 0.2s ease; }
+        .btn-small:hover { transform: scale(1.02); opacity: 0.9; }
+        .btn-ver { background: linear-gradient(135deg, var(--primary-blue), #2980B9); color: white; }
+        .btn-editar { background: linear-gradient(135deg, var(--primary-orange), #D35400); color: white; }
+        .btn-status { background: linear-gradient(135deg, var(--primary-yellow), #F39C12); color: #2c3e50; }
+        .btn-excluir { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; }
+        .btn-gps { background: linear-gradient(135deg, #1a73e8, #0d47a1); color: white; }
+        .btn-waze { background: linear-gradient(135deg, #33cc33, #228B22); color: white; }
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 50px; font-size: 11px; font-weight: bold; }
+        .status-agendado { background: var(--primary-yellow); color: #744210; }
+        .status-confirmado { background: var(--primary-green); color: white; }
+        .status-andamento { background: var(--primary-blue); color: white; }
+        .status-concluido { background: #95A5A6; color: white; }
+        .status-cancelado { background: #e74c3c; color: white; }
+
+        .contrato-paper { background: white; max-width: 210mm; margin: 0 auto; padding: 25px; border: 2px dashed var(--primary-pink); border-radius: 20px; }
+        .payment-note { background: #FFF9F9; border-left: 4px solid var(--primary-yellow); padding: 12px; margin: 20px 0; border-radius: 15px; }
+
+        .modal-edit, .modal-confirm, .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); overflow-y: auto; }
+        .modal-edit-content, .modal-confirm-content, .modal-content { background: white; margin: 5% auto; padding: 25px; border-radius: 30px; width: 90%; max-width: 700px; position: relative; border: 2px solid var(--primary-pink); }
+        .close { position: absolute; right: 20px; top: 15px; font-size: 28px; cursor: pointer; color: #aaa; }
+        .close:hover { color: var(--primary-pink); }
+
+        .alert { padding: 12px 20px; border-radius: 50px; animation: slideIn 0.3s ease; position: fixed; top: 20px; right: 20px; z-index: 1001; max-width: 400px; font-weight: bold; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .alert-success { background: linear-gradient(135deg, var(--primary-green), #27AE60); color: white; }
+        .alert-error { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: linear-gradient(135deg, var(--primary-pink), var(--primary-purple)); color: white; padding: 20px; border-radius: 25px; text-align: center; }
+        .stat-number { font-size: 2.5em; font-weight: bold; }
+
+        .whatsapp-btn { position: fixed; bottom: 20px; right: 20px; background: #25D366; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; z-index: 1000; text-decoration: none; }
+        .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; background: rgba(255,255,255,0.8); border-radius: 30px; margin-top: 10px; }
+        .maintenance-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 30px; }
+        .maintenance-card { background: #FFF9F9; border-radius: 20px; padding: 20px; text-align: center; border: 2px solid var(--primary-yellow); }
+        .file-input { margin-bottom: 15px; padding: 10px; border: 2px dashed #FF69B4; border-radius: 20px; }
+
+        .servicos-container { border: 2px solid #FFE4E1; border-radius: 20px; padding: 15px; background: #FFF9F9; }
+        .servicos-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .servicos-lista { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+        .servico-tag { background: linear-gradient(135deg, #FF69B4, #9B59B6); color: white; padding: 5px 15px; border-radius: 50px; font-size: 12px; display: inline-flex; align-items: center; gap: 8px; }
+        .remove-servico { cursor: pointer; background: rgba(255,255,255,0.3); width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; }
+        .remove-servico:hover { background: #e74c3c; }
+        .btn-add-servico { background: linear-gradient(135deg, #2ECC71, #27AE60); color: white; border: none; padding: 8px 20px; border-radius: 50px; cursor: pointer; }
+
+        @media (max-width: 768px) {
+            .menu-buttons { grid-template-columns: 1fr; }
+            .form-row { grid-template-columns: 1fr; }
+            .logo-container { flex-direction: column; }
+            .timer-badge { position: relative; top: 0; left: 0; margin-bottom: 10px; display: inline-block; }
+            .logout-btn { position: relative; top: 0; right: 0; margin-top: 15px; }
+            .plano-card { flex-direction: column; text-align: center; }
+            th, td { padding: 8px 10px; }
+            .table-actions { flex-direction: column; gap: 5px; }
+            .btn-small { width: 100%; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Tela de Primeiro Acesso -->
+    <div id="firstAccessOverlay" class="first-access-overlay">
+        <div class="first-access-box">
+            <div class="logo-icon">🎈🐶</div>
+            <h2>🎉 Bem-vindo ao Sistema! 🎉</h2>
+            <p>Primeiro acesso - Cadastre seu usuário e senha</p>
+            <input type="text" id="newUsername" class="first-input" placeholder="Nome de usuário">
+            <input type="password" id="newPassword" class="first-input" placeholder="Senha">
+            <input type="password" id="confirmPassword" class="first-input" placeholder="Confirmar senha">
+            <div style="font-size:12px; color:#888; text-align:left;">🔒 Mínimo 3 caracteres</div>
+            <button class="first-btn" onclick="cadastrarPrimeiroAcesso()">🎨 Criar Acesso e Continuar 🎨</button>
+            <div id="firstAccessError" class="first-error"></div>
+        </div>
+    </div>
+
+    <!-- Tela de Login -->
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-box">
+            <div class="logo-icon">🎭🎪</div>
+            <h2>Animador(a) Infantil</h2>
+            <p>Sistema de Gerenciamento de Eventos Infantis</p>
+            <p style="font-size:12px; color:#888;">⏱️ Período de teste: <strong id="trialTimeDisplay">7 dias</strong></p>
+            <input type="text" id="loginUser" class="login-input" placeholder="Usuário">
+            <input type="password" id="loginPass" class="login-input" placeholder="Senha">
+            <button class="login-btn" onclick="fazerLogin()">🎈 Entrar no Sistema 🎈</button>
+            <div id="loginError" class="login-error">❌ Usuário ou senha incorretos!</div>
+        </div>
+    </div>
+
+    <!-- Tela de Ativação de Licença com Planos e Valores -->
+    <div id="licenseOverlay" class="license-overlay">
+        <div class="license-box">
+            <div class="logo-icon">🔑🎫</div>
+            <h2>Ativação de Licença</h2>
+            <p id="licenseMessage" style="color:#e74c3c; font-weight:bold;">⚠️ Seu período de teste de 7 dias expirou! ⚠️</p>
+            <p>Escolha um dos planos abaixo para continuar usando o sistema:</p>
+            <div class="planos-container">
+                <div class="plano-card">
+                    <div class="plano-info"><div class="plano-nome">📅 Plano Mensal</div><div class="plano-preco">R$ 25,00</div><div class="plano-duracao">30 dias de acesso</div></div>
+                    <a href="https://wa.me/5571982905513?text=Olá!%20Gostaria%20de%20contratar%20o%20PLANO%20MENSAL%20do%20Sistema%20para%20Animador(a)%20Infantil%20no%20valor%20de%20R$%2025,00." target="_blank" class="btn-whatsapp-plano">💬 Desejo contratar</a>
+                </div>
+                <div class="plano-card">
+                    <div class="plano-info"><div class="plano-nome">📆 Plano Semestral</div><div class="plano-preco">R$ 100,00</div><div class="plano-duracao">180 dias de acesso (economize R$ 50)</div></div>
+                    <a href="https://wa.me/5571982905513?text=Olá!%20Gostaria%20de%20contratar%20o%20PLANO%20SEMESTRAL%20do%20Sistema%20para%20Animador(a)%20Infantil%20no%20valor%20de%20R$%20100,00." target="_blank" class="btn-whatsapp-plano">💬 Desejo contratar</a>
+                </div>
+                <div class="plano-card">
+                    <div class="plano-info"><div class="plano-nome">🏆 Plano Anual</div><div class="plano-preco">R$ 150,00</div><div class="plano-duracao">365 dias de acesso (economize R$ 150)</div></div>
+                    <a href="https://wa.me/5571982905513?text=Olá!%20Gostaria%20de%20contratar%20o%20PLANO%20ANUAL%20do%20Sistema%20para%20Animador(a)%20Infantil%20no%20valor%20de%20R$%20150,00." target="_blank" class="btn-whatsapp-plano">💬 Desejo contratar</a>
+                </div>
+            </div>
+            <p style="margin-top: 15px; font-size: 12px;">🔐 Após o pagamento, você receberá sua chave de ativação via WhatsApp.</p>
+            <div style="margin-top: 20px; border-top: 1px solid #FFE4E1; padding-top: 15px;">
+                <p style="font-size: 13px;">Já possui uma chave de ativação?</p>
+                <div class="license-input-group"><input type="text" id="licenseKeyInput" placeholder="Digite sua chave de ativação"></div>
+                <button class="btn-license-small" style="background:linear-gradient(135deg,var(--primary-pink),var(--primary-purple)); color:white; border:none; padding:10px 20px; border-radius:50px; cursor:pointer;" onclick="ativarLicencaComChave('mensal')">✅ Ativar Licença</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <div id="mainContent" class="main-content">
+        <div class="container">
+            <div class="header">
+                <div class="timer-badge" id="timerBadge">⏱️ Teste: 7 dias</div>
+                <button class="logout-btn" onclick="fazerLogout()">🚪 Sair</button>
+                <div class="logo-container">
+                    <div id="logoDisplay" class="logo-placeholder">🎨</div>
+                    <div class="logo-text"><h1 id="nomeArtisticoDisplay">🎨 ANIMADOR(A) INFANTIL 🎨</h1><div class="tagline" style="color:#FFD700;">🎈 Alegria e Organização! 🎈</div></div>
+                    <div class="logo-icon">🐶🐱</div>
+                </div>
+                <div class="perfil-info" id="perfilInfo"><span>⭐ Carregando perfil... ⭐</span></div>
+                <div class="balloon-animation"><div class="balloon"></div><div class="balloon"></div><div class="balloon"></div></div>
+            </div>
+
+            <div class="dashboard"><div class="dashboard-title">🎪 PRÓXIMOS EVENTOS 🎪</div><div id="agendaProximosMeses"></div></div>
+
+            <div class="menu"><div class="menu-buttons">
+                <button class="btn btn-primary" onclick="showContent('perfil')">⭐ Meu Perfil</button>
+                <button class="btn btn-primary" onclick="showContent('cadastroCliente')">📝 Novo Cliente</button>
+                <button class="btn btn-success" onclick="showContent('cadastroEvento')">🎯 Novo Evento</button>
+                <button class="btn btn-info" onclick="showContent('listaClientes')">👥 Listar Clientes</button>
+                <button class="btn btn-info" onclick="showContent('listaEventos')">🎪 Listar Eventos</button>
+                <button class="btn btn-contract" onclick="showContent('contrato')">📄 Gerar Contrato</button>
+                <button class="btn btn-warning" onclick="showContent('estatisticas')">📊 Estatísticas</button>
+                <button class="btn btn-secondary" onclick="showContent('manutencao')">🔧 Manutenção</button>
+                <button class="btn btn-secondary" onclick="carregarDadosExemplo()">🎈 Carregar Exemplo</button>
+            </div></div>
+
+            <!-- Perfil -->
+            <div id="perfil" class="content">
+                <h2>⭐ Meu Perfil Profissional ⭐</h2>
+                <form id="formPerfil">
+                    <div class="form-row"><div class="form-group"><label>Nome Artístico *</label><input type="text" id="nomeArtistico" required></div><div class="form-group"><label>WhatsApp *</label><input type="text" id="whatsappPerfil" required></div></div>
+                    <div class="form-row"><div class="form-group"><label>Email *</label><input type="email" id="emailPerfil" required></div><div class="form-group"><label>Cidade *</label><input type="text" id="cidadePerfil" required></div></div>
+                    <div class="form-row"><div class="form-group"><label>Estado (UF) *</label><input type="text" id="estadoPerfil" maxlength="2" required></div><div class="form-group"><label>Instagram</label><input type="text" id="instagramPerfil" placeholder="@seuinstagram"></div></div>
+                    <div class="form-group"><label>Sua Logo / Foto de Perfil (JPEG)</label>
+                        <div class="logo-upload"><div id="logoPreviewPerfil" class="logo-preview-placeholder">📷</div><input type="file" id="logoUpload" accept="image/jpeg, image/jpg" style="display:none" onchange="previewLogo(event)"><label for="logoUpload" class="file-input-label">📸 Selecionar Logo</label><button type="button" class="btn btn-secondary" onclick="removerLogo()" style="padding:8px 20px;">🗑️ Remover</button></div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">💾 Salvar Perfil e Ir para o Início</button>
+                </form>
+            </div>
+
+            <div id="cadastroCliente" class="content"><h2>📝 Cadastro de Cliente</h2>
+                <form id="formCliente"><div class="form-row"><div class="form-group"><label>Nome do Responsável *</label><input type="text" id="nomeCliente" required></div><div class="form-group"><label>CPF/CNPJ *</label><input type="text" id="cpfCliente" required></div></div>
+                <div class="form-row"><div class="form-group"><label>Telefone *</label><input type="text" id="telefoneCliente" required></div><div class="form-group"><label>Email *</label><input type="email" id="emailCliente" required></div></div>
+                <div class="form-group"><label>Endereço *</label><input type="text" id="enderecoCliente" required></div>
+                <div class="form-row"><div class="form-group"><label>Cidade *</label><input type="text" id="cidadeCliente" required></div><div class="form-group"><label>Estado (UF) *</label><input type="text" id="estadoCliente" maxlength="2" required></div></div>
+                <div class="form-group"><label>Nome do Aniversariante</label><input type="text" id="nomeCrianca" placeholder="Nome da criança"></div>
+                <button type="submit" class="btn btn-primary">✅ Cadastrar Cliente</button></form>
+            </div>
+
+            <div id="cadastroEvento" class="content"><h2>🎯 Cadastro de Evento</h2>
+                <form id="formEvento">
+                    <div class="form-group"><label>Cliente *</label><select id="clienteEvento" required><option value="">Selecione</option></select></div>
+                    <div class="form-group"><label>Nome da Festa *</label><input type="text" id="nomeEvento" required></div>
+                    <div class="form-group"><label>Serviços *</label>
+                        <div class="servicos-container"><div class="servicos-header"><select id="selectNovoServico"><option value="🎈 Animação Completa">🎈 Animação Completa</option><option value="🎨 Oficina de Pintura">🎨 Oficina de Pintura</option><option value="🤡 Palhaço">🤡 Palhaço</option><option value="🪄 Mágico">🪄 Mágico</option></select><button type="button" class="btn-add-servico" onclick="adicionarServico()">+ Adicionar</button></div><div id="listaServicos" class="servicos-lista"></div><input type="hidden" id="servicosContratados"></div>
+                    </div>
+                    <div class="form-group"><label>Endereço *</label><input type="text" id="enderecoEvento" required></div>
+                    <div class="form-row"><div class="form-group"><label>Cidade *</label><input type="text" id="cidadeEvento" required></div><div class="form-group"><label>Estado *</label><input type="text" id="estadoEvento" maxlength="2" required></div></div>
+                    <div class="form-row"><div class="form-group"><label>Tema da Festa</label><input type="text" id="temaFesta"></div><div class="form-group"><label>Faixa Etária</label><select id="faixaEtaria"><option>0-2</option><option>3-5</option><option>6-8</option><option>9-12</option></select></div></div>
+                    <div class="form-row"><div class="form-group"><label>Data *</label><input type="date" id="dataEvento" required></div><div class="form-group"><label>Hora *</label><input type="time" id="horaEvento" required></div></div>
+                    <div class="form-row"><div class="form-group"><label>Qtd. Crianças</label><input type="number" id="qtdCriancas" min="1"></div><div class="form-group"><label>Horas *</label><input type="number" id="qtdHoras" min="1" step="0.5" required></div></div>
+                    <div class="form-row"><div class="form-group"><label>Valor (R$) *</label><input type="number" id="valorServico" min="0" step="any" required></div><div class="form-group"><label>Telefone Contato</label><input type="text" id="telefoneContato"></div></div>
+                    <div class="form-group"><label>Observações</label><textarea id="observacoes"></textarea></div>
+                    <button type="submit" class="btn btn-success">✅ Cadastrar Evento</button>
+                </form>
+            </div>
+
+            <div id="listaClientes" class="content"><h2>👥 Lista de Clientes</h2><div id="clientesList"></div></div>
+            
+            <!-- LISTA DE EVENTOS COM GPS -->
+            <div id="listaEventos" class="content">
+                <h2>🎪 Lista de Eventos Infantis</h2>
+                <div class="form-group"><label>Filtrar por Status:</label>
+                    <select id="filtroStatus" onchange="filtrarEventos()" style="max-width: 200px;">
+                        <option value="todos">📋 Todos</option>
+                        <option value="Agendado">📋 Agendado</option>
+                        <option value="Confirmado">✅ Confirmado</option>
+                        <option value="Em andamento">🎈 Em andamento</option>
+                        <option value="Concluído">🏁 Concluído</option>
+                        <option value="Cancelado">❌ Cancelado</option>
+                    </select>
+                </div>
+                <div id="eventosList"></div>
+            </div>
+            
+            <div id="contrato" class="content"><h2>📄 Gerar Contrato</h2><div class="form-group"><label>Selecione o Evento</label><select id="selectEventoContrato" onchange="carregarDadosContrato()"><option value="">Selecione</option></select></div><div id="contratoPreview"></div></div>
+            <div id="estatisticas" class="content"><h2>📊 Estatísticas</h2><div id="estatisticasContent"></div></div>
+            <div id="manutencao" class="content"><h2>🔧 Manutenção</h2><div class="maintenance-actions"><div class="maintenance-card"><h3>🗑️ Limpar Dados</h3><button class="btn btn-danger" onclick="confirmarLimparDados()">Limpar Todos</button></div><div class="maintenance-card"><h3>💾 Backup</h3><button class="btn btn-info" onclick="fazerBackup()">Baixar Backup</button></div><div class="maintenance-card"><h3>🔄 Restaurar</h3><div class="file-input"><input type="file" id="restoreFile" accept=".json"></div><button class="btn btn-warning" onclick="restaurarBackup()">Restaurar</button></div><div class="maintenance-card"><h3>🔐 Alterar Senha</h3><button class="btn btn-primary" onclick="alterarSenha()">Alterar Senha</button></div></div></div>
+            <div class="footer"><p>🎨 Animador(a) Infantil - Alegria garantida! 🎈</p><p id="footerContato">📞 WhatsApp: (71) 98290-5513</p></div>
+        </div>
+    </div>
+
+    <a href="https://wa.me/5571982905513" class="whatsapp-btn" target="_blank">💬</a>
+
+    <!-- Modais -->
+    <div id="modalEditCliente" class="modal-edit"><div class="modal-edit-content"><span class="close" onclick="fecharModalEditCliente()">&times;</span><h2>✏️ Editar Cliente</h2><form id="formEditCliente"><input type="hidden" id="editClienteId"><div class="form-row"><div class="form-group"><label>Nome</label><input type="text" id="editNomeCliente" required></div><div class="form-group"><label>CPF/CNPJ</label><input type="text" id="editCpfCliente" required></div></div><div class="form-row"><div class="form-group"><label>Telefone</label><input type="text" id="editTelefoneCliente" required></div><div class="form-group"><label>Email</label><input type="email" id="editEmailCliente" required></div></div><div class="form-group"><label>Endereço</label><input type="text" id="editEnderecoCliente" required></div><div class="form-row"><div class="form-group"><label>Cidade</label><input type="text" id="editCidadeCliente" required></div><div class="form-group"><label>Estado</label><input type="text" id="editEstadoCliente" maxlength="2" required></div></div><div class="form-group"><label>Aniversariante</label><input type="text" id="editNomeCrianca"></div><button type="submit" class="btn btn-primary">Salvar</button><button type="button" class="btn btn-secondary" onclick="fecharModalEditCliente()">Cancelar</button></form></div></div>
+    <div id="modalEditEvento" class="modal-edit"><div class="modal-edit-content"><span class="close" onclick="fecharModalEditEvento()">&times;</span><h2>✏️ Editar Evento</h2><form id="formEditEvento"><input type="hidden" id="editEventoId"><div class="form-group"><label>Nome</label><input type="text" id="editNomeEvento" required></div><div class="form-group"><label>Serviços</label><div class="servicos-container"><div class="servicos-header"><select id="editSelectNovoServico"><option value="🎈 Animação Completa">Animação</option></select><button type="button" class="btn-add-servico" onclick="adicionarServicoEdit()">+ Adicionar</button></div><div id="editListaServicos" class="servicos-lista"></div><input type="hidden" id="editServicosContratados"></div></div><div class="form-group"><label>Endereço</label><input type="text" id="editEnderecoEvento" required></div><div class="form-row"><div class="form-group"><label>Cidade</label><input type="text" id="editCidadeEvento" required></div><div class="form-group"><label>Estado</label><input type="text" id="editEstadoEvento" maxlength="2"></div></div><div class="form-row"><div class="form-group"><label>Data</label><input type="date" id="editDataEvento" required></div><div class="form-group"><label>Hora</label><input type="time" id="editHoraEvento" required></div></div><div class="form-row"><div class="form-group"><label>Horas</label><input type="number" id="editQtdHoras" step="0.5" required></div><div class="form-group"><label>Valor</label><input type="number" id="editValorServico" step="any" required></div></div><div class="form-group"><label>Status</label><select id="editStatusEvento"><option>Agendado</option><option>Confirmado</option><option>Em andamento</option><option>Concluído</option><option>Cancelado</option></select></div><div class="form-group"><label>Observações</label><textarea id="editObservacoes"></textarea></div><button type="submit" class="btn btn-primary">Salvar</button><button type="button" class="btn btn-secondary" onclick="fecharModalEditEvento()">Cancelar</button></form></div></div>
+    <div id="modalConfirm" class="modal-confirm"><div class="modal-confirm-content"><h3>⚠️ Confirmar</h3><p id="mensagemConfirm"></p><div class="modal-buttons"><button class="btn btn-danger" id="btnConfirmarSim">Sim</button><button class="btn btn-secondary" id="btnConfirmarNao">Não</button></div></div></div>
+    <div id="modalContrato" class="modal"><div class="modal-content"><span class="close" onclick="fecharModalContrato()">&times;</span><div id="modalContratoBody"></div><div style="text-align:center;"><button class="btn btn-success" onclick="baixarContratoJPEG()">📸 Baixar JPEG</button><button class="btn btn-primary" onclick="imprimirContrato()">🖨️ Imprimir</button></div></div></div>
+
+    <script>
+        // CHAVES DE LICENÇA
+        const LICENCA_MENSAL_KEY = "ANIM-MENSAL-2024-X7K9";
+        const LICENCA_SEMESTRAL_KEY = "ANIM-SEMESTRAL-2024-W8H4";
+        const LICENCA_ANUAL_KEY = "ANIM-ANUAL-2024-Y5L2";
+        
+        const STORAGE_CREDENTIALS_KEY = "animadorCredentials";
+        const STORAGE_LICENSE_KEY = "animadorLicense";
+        const STORAGE_TRIAL_KEY = "animadorTrialStart";
+        const STORAGE_PERFIL_KEY = "animadorPerfil";
+        const STORAGE_LOGO_KEY = "animadorLogo";
+        const TRIAL_DAYS = 7;
+
+        let clientes = [], eventos = [], proximoIdCliente = 1, proximoIdEvento = 1, contratoAtual = null, itemParaExcluir = { tipo: null, id: null };
+        let servicosSelecionados = [], servicosSelecionadosEdit = [];
+        let perfilAnimador = { nomeArtistico: "", whatsapp: "", email: "", cidade: "", estado: "", instagram: "" };
+        let timerInterval = null;
+
+        // Funções GPS
+        function abrirGPS(endereco, cidade, estado) {
+            const enderecoCompleto = `${endereco}, ${cidade} - ${estado}, Brasil`;
+            const urlGoogle = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(enderecoCompleto)}&travelmode=driving`;
+            window.open(urlGoogle, '_blank');
+        }
+
+        function abrirWaze(endereco, cidade, estado) {
+            const enderecoCompleto = `${endereco}, ${cidade} - ${estado}, Brasil`;
+            const urlWaze = `https://www.waze.com/ul?q=${encodeURIComponent(enderecoCompleto)}&navigate=yes`;
+            window.open(urlWaze, '_blank');
+        }
+
+        function getTempoRestanteMs() {
+            const savedLic = localStorage.getItem(STORAGE_LICENSE_KEY);
+            if (savedLic) { const lic = JSON.parse(savedLic); if (lic.dataExpiracao > new Date().getTime()) return lic.dataExpiracao - new Date().getTime(); }
+            const trialStart = localStorage.getItem(STORAGE_TRIAL_KEY);
+            if (trialStart) { const endTime = parseInt(trialStart) + (TRIAL_DAYS * 24 * 60 * 60 * 1000); return Math.max(0, endTime - new Date().getTime()); }
+            return 0;
+        }
+        function verificarAcesso() { return getTempoRestanteMs() > 0; }
+        function formatarTempoRestante() { const ms = getTempoRestanteMs(); const dias = Math.floor(ms / (1000 * 60 * 60 * 24)); if (dias > 0) return `${dias} dia${dias !== 1 ? 's' : ''}`; const horas = Math.floor(ms / (1000 * 60 * 60)); if (horas > 0) return `${horas} hora${horas !== 1 ? 's' : ''}`; const minutos = Math.floor(ms / (1000 * 60)); return `${minutos} minuto${minutos !== 1 ? 's' : ''}`; }
+        function atualizarTimer() { const tr = getTempoRestanteMs(); const badge = document.getElementById('timerBadge'); const loginDisplay = document.getElementById('trialTimeDisplay'); const texto = tr > 0 ? formatarTempoRestante() : "expirado"; if (badge) badge.innerHTML = `⏱️ Teste: ${texto}`; if (loginDisplay) loginDisplay.innerHTML = texto; if (tr <= 0 && !localStorage.getItem(STORAGE_LICENSE_KEY) && document.getElementById('mainContent').classList.contains('visible')) fazerLogoutForcado(); }
+        function iniciarTimer() { if (timerInterval) clearInterval(timerInterval); timerInterval = setInterval(atualizarTimer, 60000); atualizarTimer(); }
+        function pararTimer() { if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } }
+        function fazerLogoutForcado() { pararTimer(); document.getElementById('mainContent').classList.remove('visible'); document.getElementById('licenseOverlay').style.display = 'flex'; document.getElementById('loginOverlay').style.display = 'none'; }
+        function ativarLicencaComChave(tipo) {
+            const chave = document.getElementById('licenseKeyInput').value.trim().toUpperCase();
+            let chaveCorreta = "", dias = 0, nome = "";
+            if (tipo === 'mensal') { chaveCorreta = LICENCA_MENSAL_KEY; dias = 30; nome = "MENSAL"; }
+            else if (tipo === 'semestral') { chaveCorreta = LICENCA_SEMESTRAL_KEY; dias = 180; nome = "SEMESTRAL"; }
+            else if (tipo === 'anual') { chaveCorreta = LICENCA_ANUAL_KEY; dias = 365; nome = "ANUAL"; }
+            if (chave === chaveCorreta) { localStorage.setItem(STORAGE_LICENSE_KEY, JSON.stringify({ tipo: nome, dataExpiracao: new Date().getTime() + (dias * 24 * 60 * 60 * 1000) })); localStorage.removeItem(STORAGE_TRIAL_KEY); mostrarAlerta(`✅ Licença ${nome} ativada!`, "success"); document.getElementById('licenseOverlay').style.display = 'none'; document.getElementById('loginOverlay').style.display = 'flex'; document.getElementById('licenseKeyInput').value = ''; atualizarTimer(); } else { mostrarAlerta("❌ Chave inválida!", "error"); }
+        }
+
+        function isFirstAccess() { return !localStorage.getItem(STORAGE_CREDENTIALS_KEY); }
+        function cadastrarPrimeiroAcesso() {
+            const username = document.getElementById('newUsername').value.trim();
+            const password = document.getElementById('newPassword').value;
+            const confirm = document.getElementById('confirmPassword').value;
+            const errorDiv = document.getElementById('firstAccessError');
+            if (username.length < 3) { errorDiv.style.display = 'block'; errorDiv.innerHTML = '❌ Usuário mínimo 3 caracteres!'; return; }
+            if (password.length < 3) { errorDiv.style.display = 'block'; errorDiv.innerHTML = '❌ Senha mínimo 3 caracteres!'; return; }
+            if (password !== confirm) { errorDiv.style.display = 'block'; errorDiv.innerHTML = '❌ Senhas não coincidem!'; return; }
+            localStorage.setItem(STORAGE_CREDENTIALS_KEY, JSON.stringify({ username, password: btoa(password) }));
+            localStorage.setItem(STORAGE_TRIAL_KEY, new Date().getTime().toString());
+            document.getElementById('firstAccessOverlay').style.display = 'none';
+            document.getElementById('mainContent').classList.add('visible');
+            iniciarTimer();
+            carregarPerfil();
+            initSistema();
+            showContent('perfil');
+            mostrarAlerta("✅ Cadastro realizado! Agora personalize seu perfil.", "success");
+        }
+        function verificarCredenciais(user, pass) { const saved = localStorage.getItem(STORAGE_CREDENTIALS_KEY); if (!saved) return false; const cred = JSON.parse(saved); return cred.username === user && cred.password === btoa(pass); }
+        function alterarSenha() { const nova = prompt("Digite a nova senha (mínimo 3 caracteres):"); if (nova && nova.length >= 3) { const saved = JSON.parse(localStorage.getItem(STORAGE_CREDENTIALS_KEY)); saved.password = btoa(nova); localStorage.setItem(STORAGE_CREDENTIALS_KEY, JSON.stringify(saved)); mostrarAlerta("✅ Senha alterada!", "success"); } else if (nova) { mostrarAlerta("❌ Mínimo 3 caracteres!", "error"); } }
+        function fazerLogin() { if (!verificarAcesso()) { document.getElementById('loginOverlay').style.display = 'none'; document.getElementById('licenseOverlay').style.display = 'flex'; return; } const user = document.getElementById('loginUser').value; const pass = document.getElementById('loginPass').value; if (verificarCredenciais(user, pass)) { document.getElementById('loginOverlay').style.display = 'none'; document.getElementById('mainContent').classList.add('visible'); iniciarTimer(); carregarPerfil(); initSistema(); showContent('listaEventos'); } else { document.getElementById('loginError').style.display = 'block'; document.getElementById('loginPass').value = ''; } }
+        function fazerLogout() { pararTimer(); document.getElementById('loginOverlay').style.display = 'flex'; document.getElementById('mainContent').classList.remove('visible'); document.getElementById('licenseOverlay').style.display = 'none'; document.getElementById('loginUser').value = ''; document.getElementById('loginPass').value = ''; atualizarTimer(); }
+        document.addEventListener('keypress', e => { if (e.key === 'Enter') { if (document.getElementById('firstAccessOverlay').style.display === 'flex') cadastrarPrimeiroAcesso(); else if (document.getElementById('loginOverlay').style.display === 'flex') fazerLogin(); } });
+        if (isFirstAccess()) { document.getElementById('firstAccessOverlay').style.display = 'flex'; } else { document.getElementById('loginOverlay').style.display = 'flex'; if (!verificarAcesso()) { document.getElementById('loginOverlay').style.display = 'none'; document.getElementById('licenseOverlay').style.display = 'flex'; } }
+
+        function carregarPerfil() { const saved = localStorage.getItem(STORAGE_PERFIL_KEY); if (saved) perfilAnimador = JSON.parse(saved); else perfilAnimador = { nomeArtistico: "", whatsapp: "", email: "", cidade: "", estado: "", instagram: "" }; atualizarInterfacePerfil(); }
+        function salvarPerfil() { localStorage.setItem(STORAGE_PERFIL_KEY, JSON.stringify(perfilAnimador)); atualizarInterfacePerfil(); }
+        function atualizarInterfacePerfil() {
+            document.getElementById('nomeArtisticoDisplay').innerHTML = perfilAnimador.nomeArtistico ? `🎨 ${perfilAnimador.nomeArtistico} 🎨` : "🎨 ANIMADOR(A) INFANTIL 🎨";
+            document.getElementById('perfilInfo').innerHTML = perfilAnimador.nomeArtistico ? `<span>⭐ ${perfilAnimador.nomeArtistico}</span><span>📞 ${perfilAnimador.whatsapp}</span><span>📧 ${perfilAnimador.email}</span><span>📍 ${perfilAnimador.cidade}/${perfilAnimador.estado}</span>` : '<span>⭐ Complete seu perfil! ⭐</span>';
+            document.getElementById('footerContato').innerHTML = `📞 WhatsApp: ${perfilAnimador.whatsapp || '(71) 98290-5513'} | 📧 ${perfilAnimador.email || 'animador@infantil.com'}`;
+            document.getElementById('nomeArtistico').value = perfilAnimador.nomeArtistico || '';
+            document.getElementById('whatsappPerfil').value = perfilAnimador.whatsapp || '';
+            document.getElementById('emailPerfil').value = perfilAnimador.email || '';
+            document.getElementById('cidadePerfil').value = perfilAnimador.cidade || '';
+            document.getElementById('estadoPerfil').value = perfilAnimador.estado || '';
+            document.getElementById('instagramPerfil').value = perfilAnimador.instagram || '';
+            const logoData = localStorage.getItem(STORAGE_LOGO_KEY);
+            if (logoData) { document.getElementById('logoPreviewPerfil').innerHTML = `<img src="${logoData}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`; document.getElementById('logoDisplay').innerHTML = `<img src="${logoData}" style="width:80px; height:80px; object-fit:cover; border-radius:50%; border:3px solid #F1C40F;">`; }
+            else { document.getElementById('logoPreviewPerfil').innerHTML = '📷'; document.getElementById('logoDisplay').innerHTML = '🎨'; }
+        }
+        function salvarPerfilForm(e) { e.preventDefault(); perfilAnimador = { nomeArtistico: document.getElementById('nomeArtistico').value, whatsapp: document.getElementById('whatsappPerfil').value, email: document.getElementById('emailPerfil').value, cidade: document.getElementById('cidadePerfil').value, estado: document.getElementById('estadoPerfil').value.toUpperCase(), instagram: document.getElementById('instagramPerfil').value }; salvarPerfil(); mostrarAlerta("✅ Perfil salvo! Redirecionando...", "success"); setTimeout(() => showContent('listaEventos'), 1500); }
+        function previewLogo(e) { const file = e.target.files[0]; if (file && (file.type === 'image/jpeg' || file.type === 'image/jpg')) { const reader = new FileReader(); reader.onload = ev => { localStorage.setItem(STORAGE_LOGO_KEY, ev.target.result); atualizarInterfacePerfil(); mostrarAlerta("✅ Logo atualizada!", "success"); }; reader.readAsDataURL(file); } else { mostrarAlerta("❌ Formato JPEG apenas!", "error"); } }
+        function removerLogo() { localStorage.removeItem(STORAGE_LOGO_KEY); atualizarInterfacePerfil(); mostrarAlerta("Logo removida!", "success"); }
+
+        function salvarDados() { localStorage.setItem('animadorEventos', JSON.stringify({ clientes, eventos, proximoIdCliente, proximoIdEvento })); atualizarAgenda(); }
+        function carregarDados() { const d = localStorage.getItem('animadorEventos'); if(d) { const p = JSON.parse(d); clientes = p.clientes || []; eventos = p.eventos || []; proximoIdCliente = p.proximoIdCliente || 1; proximoIdEvento = p.proximoIdEvento || 1; } else carregarDadosExemplo(); }
+        function carregarDadosExemplo() {
+            clientes = [{ id:1, nome:"MARIA SANTOS", cpf_cnpj:"12345678900", telefone:"(71) 99999-9999", email:"maria@email.com", endereco:"Rua das Flores, 100", cidade:"SALVADOR", estado:"BA", nome_crianca:"Ana Clara" }];
+            const data = new Date(new Date().getFullYear(), new Date().getMonth()+1, 15).toISOString().split('T')[0];
+            eventos = [{ id:1, nome_evento:"ANIVERSÁRIO DA ANA CLARA", cliente:clientes[0], servicos:"🎈 Animação Completa", endereco_evento:"Salão de Festas", cidade_evento:"SALVADOR", estado_evento:"BA", tema_festa:"Princesas", faixa_etaria:"3-5", data_evento:data, hora_evento:"15:00", qtd_criancas:25, qtd_horas:4, valor:850, status:"Confirmado" }];
+            proximoIdCliente = 2; proximoIdEvento = 2; salvarDados(); atualizarSelectClientes(); mostrarAlerta("Exemplo carregado!", "success");
+        }
+
+        function gerarContratoHTML(e) {
+            const val = e.valor||0, entrada=val*0.5, restante=val*0.5, dataEvento=e.data_evento.split('-').reverse().join('/'), cli=e.cliente;
+            const logo = localStorage.getItem(STORAGE_LOGO_KEY);
+            document.getElementById('contratoPreview').innerHTML = `<div class="contrato-container"><div id="contratoParaImprimir" class="contrato-paper"><div style="text-align:center;">${logo?`<img src="${logo}" style="width:60px; border-radius:50%;">`:''}<div style="font-size:22px; color:#FF69B4;">CONTRATO DE ANIMAÇÃO</div><div>${perfilAnimador.nomeArtistico||'Animador(a)'}</div></div>
+            <div class="payment-note">⚠️ PAGAMENTO: 50% na assinatura + 50% na chegada</div>
+            <div><strong>CONTRATANTE:</strong> ${cli.nome}<br><strong>Aniversariante:</strong> ${cli.nome_crianca||'-'}<br><strong>Telefone:</strong> ${cli.telefone}</div>
+            <div><strong>EVENTO:</strong> ${e.nome_evento}<br><strong>Data:</strong> ${dataEvento} às ${e.hora_evento}<br><strong>Local:</strong> ${e.endereco_evento}, ${e.cidade_evento}/${e.estado_evento}<br><strong>Duração:</strong> ${e.qtd_horas}h</div>
+            <div><strong>VALOR:</strong> R$ ${val.toFixed(2)}<br>Entrada: R$ ${entrada.toFixed(2)}<br>Saldo na chegada: R$ ${restante.toFixed(2)}</div>
+            <div><strong>CLÁUSULAS:</strong><br>• Aguarda 15min de atraso<br>• Cancelamento: remarcação em 90 dias (sem reembolso)</div>
+            <div style="display:flex; justify-content:space-between; margin-top:30px;"><div style="border-top:1px solid #333; width:200px;">${perfilAnimador.nomeArtistico||'Animador'}</div><div style="border-top:1px solid #333; width:200px;">${cli.nome}</div></div>
+            <div style="text-align:center; font-size:10px;">${perfilAnimador.cidade||'Salvador'}, ${new Date().toLocaleDateString()}</div></div><div style="text-align:center; margin-top:20px;"><button class="btn btn-primary" onclick="visualizarContratoJPEG()">👁️ Visualizar</button> <button class="btn btn-success" onclick="imprimirContrato()">🖨️ Imprimir</button> <button class="btn btn-warning" onclick="baixarContratoJPEG()">📸 Baixar JPEG</button></div></div>`;
+        }
+        function visualizarContratoJPEG() { const el = document.getElementById('contratoParaImprimir'); if(el) html2canvas(el,{scale:2}).then(c=>{ document.getElementById('modalContratoBody').innerHTML=`<img src="${c.toDataURL('image/jpeg')}" style="width:100%">`; document.getElementById('modalContrato').style.display='block'; }); }
+        function baixarContratoJPEG() { const el = document.getElementById('contratoParaImprimir'); if(el) html2canvas(el,{scale:2}).then(c=>{ const a=document.createElement('a'); a.download=`contrato_${Date.now()}.jpeg`; a.href=c.toDataURL('image/jpeg'); a.click(); mostrarAlerta("Contrato baixado!","success"); }); }
+        function imprimirContrato() { const c = document.getElementById('contratoParaImprimir')?.outerHTML; if(c){ const w=window.open(); w.document.write(c); w.print(); w.close(); } }
+        function fecharModalContrato() { document.getElementById('modalContrato').style.display='none'; }
+
+        function atualizarSelectClientes() { const s = document.getElementById('clienteEvento'); if(s){ s.innerHTML='<option value="">Selecione</option>'; clientes.forEach(c=>s.innerHTML+=`<option value="${c.id}">${c.nome}${c.nome_crianca?` - ${c.nome_crianca}`:''}</option>`); } }
+        function atualizarSelectEventosContrato() { const s = document.getElementById('selectEventoContrato'); if(s){ s.innerHTML='<option value="">Selecione</option>'; eventos.forEach(e=>s.innerHTML+=`<option value="${e.id}">${e.nome_evento} - ${e.cliente.nome}</option>`); } }
+        function formatarData(d){ if(!d)return ''; const p=d.split('-'); return `${p[2]}/${p[1]}/${p[0]}`; }
+        
+        function atualizarAgenda(){
+            const hoje=new Date(); hoje.setHours(0,0,0,0); const limite=new Date(hoje); limite.setMonth(hoje.getMonth()+3);
+            const futuros=eventos.filter(e=>new Date(e.data_evento)>=hoje && new Date(e.data_evento)<=limite && (e.status==='Confirmado'||e.status==='Agendado')).sort((a,b)=>new Date(a.data_evento)-new Date(b.data_evento));
+            if(!futuros.length){ document.getElementById('agendaProximosMeses').innerHTML='<div class="empty-agenda">🎈 Nenhum evento nos próximos 3 meses.</div>'; return; }
+            let html='<div class="agenda-grid">'; 
+            futuros.forEach(e=>{ const dias=Math.ceil((new Date(e.data_evento)-new Date())/(86400000)); 
+                html+=`<div class="agenda-card"><div class="agenda-header">🎪 ${formatarData(e.data_evento)} (em ${dias} dias)</div><div class="agenda-body">
+                    <div class="agenda-date">🎈 ${e.nome_evento}</div><div>⏰ ${e.hora_evento} - ${e.qtd_horas}h</div><div>👤 ${e.cliente.nome}${e.cliente.nome_crianca?` (${e.cliente.nome_crianca})`:''}</div>
+                    <div>📍 ${e.endereco_evento}, ${e.cidade_evento}</div>
+                    <div><span class="agenda-badge badge-${e.status==='Confirmado'?'confirmado':'agendado'}">${e.status}</span></div>
+                    <div><button onclick="abrirModalEditEvento(${e.id})" style="background:#FF69B4; color:white; border:none; padding:4px 12px; border-radius:20px; margin-top:8px;">✏️ Editar</button> <button onclick="confirmarExclusaoEvento(${e.id},'${e.nome_evento}')" style="background:#e74c3c; color:white; border:none; padding:4px 12px; border-radius:20px;">🗑️ Excluir</button></div>
+                </div></div>`; }); 
+            html+='</div>'; document.getElementById('agendaProximosMeses').innerHTML=html;
+        }
+        
+        function showContent(id){ document.querySelectorAll('.content').forEach(c=>c.classList.remove('active')); document.getElementById(id).classList.add('active'); if(id==='listaClientes') listarClientes(); if(id==='listaEventos') listarEventos(); if(id==='estatisticas') mostrarEstatisticas(); if(id==='cadastroEvento'){ atualizarSelectClientes(); servicosSelecionados=[]; atualizarListaServicos();} if(id==='contrato') atualizarSelectEventosContrato(); }
+        function mostrarAlerta(msg,tipo){ const d=document.createElement('div'); d.className=`alert alert-${tipo}`; d.innerHTML=msg; document.body.appendChild(d); setTimeout(()=>d.remove(),3000); }
+        
+        function cadastrarCliente(e){ e.preventDefault(); const c={id:proximoIdCliente++, nome:document.getElementById('nomeCliente').value.toUpperCase(), cpf_cnpj:document.getElementById('cpfCliente').value, telefone:document.getElementById('telefoneCliente').value, email:document.getElementById('emailCliente').value, endereco:document.getElementById('enderecoCliente').value, cidade:document.getElementById('cidadeCliente').value.toUpperCase(), estado:document.getElementById('estadoCliente').value.toUpperCase(), nome_crianca:document.getElementById('nomeCrianca').value}; clientes.push(c); salvarDados(); atualizarSelectClientes(); mostrarAlerta(`✅ Cliente cadastrado!`,"success"); document.getElementById('formCliente').reset();}
+        
+        function listarClientes(){ if(!clientes.length){document.getElementById('clientesList').innerHTML='<p>❌ Nenhum cliente.</p>'; return;} let h='<div class="table-container">\n<table>\n<thead>\n<tr><th>ID</th><th>Responsável</th><th>Aniversariante</th><th>Telefone</th><th>Cidade</th><th>Ações</th></tr>\n</thead>\n<tbody>'; clientes.forEach(c=>{h+=`<tr><td>${c.id}</td><td>${c.nome}</td><td>${c.nome_crianca||'-'}</td><td>${c.telefone}</td><td>${c.cidade}</td><td><button class="btn-small btn-ver" onclick="verDetalhesCliente(${c.id})">Ver</button> <button class="btn-small btn-editar" onclick="abrirModalEditCliente(${c.id})">Editar</button> <button class="btn-small btn-excluir" onclick="confirmarExclusaoCliente(${c.id},'${c.nome}')">Excluir</button></td></tr>`;}); h+='</tbody>\n</table>\n</div>'; document.getElementById('clientesList').innerHTML=h;}
+        function verDetalhesCliente(id){ const c=clientes.find(c=>c.id===id); alert(`🎈 CLIENTE\n\n${c.nome}\nAniversariante: ${c.nome_crianca||'-'}\nCPF: ${c.cpf_cnpj}\nTel: ${c.telefone}\nEmail: ${c.email}\nEndereço: ${c.endereco}\n${c.cidade}/${c.estado}`); }
+        
+        function cadastrarEvento(e){ e.preventDefault(); const cid=parseInt(document.getElementById('clienteEvento').value); const cl=clientes.find(c=>c.id===cid); if(!cl){mostrarAlerta("❌ Selecione um cliente!","error"); return;} if(servicosSelecionados.length===0){mostrarAlerta("❌ Adicione serviços!","error"); return;} const ev={id:proximoIdEvento++, nome_evento:document.getElementById('nomeEvento').value.toUpperCase(), cliente:cl, servicos:servicosSelecionados.join(', '), endereco_evento:document.getElementById('enderecoEvento').value, cidade_evento:document.getElementById('cidadeEvento').value.toUpperCase(), estado_evento:document.getElementById('estadoEvento').value.toUpperCase(), tema_festa:document.getElementById('temaFesta').value, faixa_etaria:document.getElementById('faixaEtaria').value, data_evento:document.getElementById('dataEvento').value, hora_evento:document.getElementById('horaEvento').value, qtd_criancas:parseInt(document.getElementById('qtdCriancas').value)||0, qtd_horas:parseFloat(document.getElementById('qtdHoras').value), valor:parseFloat(document.getElementById('valorServico').value), telefone_contato:document.getElementById('telefoneContato').value, observacoes:document.getElementById('observacoes').value, status:"Agendado"}; eventos.push(ev); salvarDados(); mostrarAlerta(`✅ Evento cadastrado!`,"success"); document.getElementById('formEvento').reset(); servicosSelecionados=[]; atualizarListaServicos();}
+        
+        // LISTA DE EVENTOS COM GPS
+        function listarEventos(){ filtrarEventos(); }
+        function filtrarEventos(){ 
+            const filtro = document.getElementById('filtroStatus')?.value || 'todos'; 
+            let evs = filtro === 'todos' ? eventos : eventos.filter(e => e.status === filtro); 
+            if(!evs.length){ 
+                document.getElementById('eventosList').innerHTML = '<div style="text-align:center; padding:40px; color:#999;">🎈 Nenhum evento encontrado. Cadastre seu primeiro evento!</div>'; 
+                return; 
+            }
+            let h = '<div class="table-container">\n<table>\n<thead>\n<tr>';
+            h += '<th>Evento</th><th>Cliente</th><th>Aniversariante</th><th>Serviços</th><th>Data/Hora</th><th>Local</th><th>Valor</th><th>Status</th><th>GPS</th><th>Ações</th>';
+            h += '</tr>\n</thead>\n<tbody>';
+            evs.forEach(e => {
+                const statusClass = e.status === 'Confirmado' ? 'status-confirmado' : (e.status === 'Agendado' ? 'status-agendado' : (e.status === 'Em andamento' ? 'status-andamento' : (e.status === 'Concluído' ? 'status-concluido' : 'status-cancelado')));
+                h += `<tr>
+                    <td><strong>${e.nome_evento}</strong>${e.tema_festa ? `<br><small style="color:#FF69B4;">🎨 ${e.tema_festa}</small>` : ''}</td>
+                    <td>${e.cliente.nome}</td>
+                    <td>${e.cliente.nome_crianca || '-'}</td>
+                    <td><small>${e.servicos || '🎈 Animação'}</small></td>
+                    <td>${formatarData(e.data_evento)}<br>${e.hora_evento}</td>
+                    <td><small>${e.endereco_evento.substring(0,25)}${e.endereco_evento.length > 25 ? '...' : ''}</small><br>${e.cidade_evento}/${e.estado_evento}</td>
+                    <td><strong>R$ ${(e.valor || 0).toFixed(2)}</strong></td>
+                    <td><span class="status-badge ${statusClass}">${e.status}</span></td>
+                    <td class="table-actions">
+                        <button class="btn-small btn-gps" onclick="abrirGPS('${e.endereco_evento.replace(/'/g, "\\'")}', '${e.cidade_evento}', '${e.estado_evento}')">🗺️ Maps</button>
+                        <button class="btn-small btn-waze" onclick="abrirWaze('${e.endereco_evento.replace(/'/g, "\\'")}', '${e.cidade_evento}', '${e.estado_evento}')">🧭 Waze</button>
+                    </td>
+                    <td class="table-actions">
+                        <button class="btn-small btn-ver" onclick="verDetalhesEvento(${e.id})">👁️ Ver</button>
+                        <button class="btn-small btn-editar" onclick="abrirModalEditEvento(${e.id})">✏️ Editar</button>
+                        <button class="btn-small btn-status" onclick="atualizarStatus(${e.id})">📌 Status</button>
+                        <button class="btn-small btn-excluir" onclick="confirmarExclusaoEvento(${e.id},'${e.nome_evento}')">🗑️ Excluir</button>
+                    </td>
+                </tr>`;
+            });
+            h += '</tbody>\n</table>\n</div>';
+            document.getElementById('eventosList').innerHTML = h;
+        }
+        
+        function verDetalhesEvento(id){ const e=eventos.find(e=>e.id===id); alert(`🎪 EVENTO\n\n${e.nome_evento}\nCliente: ${e.cliente.nome}\nAniversariante: ${e.cliente.nome_crianca||'-'}\nServiços: ${e.servicos}\nTema: ${e.tema_festa||'Livre'}\nData: ${formatarData(e.data_evento)} ${e.hora_evento}\nDuração: ${e.qtd_horas}h\nCrianças: ${e.qtd_criancas||0}\nLocal: ${e.endereco_evento}\n${e.cidade_evento}/${e.estado_evento}\nValor: R$ ${(e.valor||0).toFixed(2)}\nStatus: ${e.status}\nObs: ${e.observacoes||'Nenhuma'}`); }
+        
+        function atualizarStatus(id){ const e=eventos.find(e=>e.id===id); const op=prompt(`Status atual: ${e.status}\n\n1 - Agendado\n2 - Confirmado\n3 - Em andamento\n4 - Concluído\n5 - Cancelado`); const sts=["Agendado","Confirmado","Em andamento","Concluído","Cancelado"]; if(op&&op>=1&&op<=5){ e.status=sts[parseInt(op)-1]; salvarDados(); listarEventos(); atualizarAgenda(); mostrarAlerta("✅ Status atualizado!","success"); } }
+        function carregarDadosContrato(){ const id=parseInt(document.getElementById('selectEventoContrato').value); if(id){ contratoAtual=eventos.find(e=>e.id===id); gerarContratoHTML(contratoAtual); } else document.getElementById('contratoPreview').innerHTML=''; }
+        function mostrarEstatisticas(){ const total=eventos.reduce((s,e)=>s+(e.valor||0),0); document.getElementById('estatisticasContent').innerHTML=`<div class="stats-grid"><div class="stat-card"><div class="stat-number">${clientes.length}</div><div class="stat-label">Clientes</div></div><div class="stat-card"><div class="stat-number">${eventos.length}</div><div class="stat-label">Eventos</div></div><div class="stat-card"><div class="stat-number">R$ ${total.toFixed(2)}</div><div class="stat-label">Faturamento</div></div></div>`; }
+        function confirmarLimparDados(){ if(confirm("⚠️ LIMPAR TODOS OS DADOS?")){ clientes=[]; eventos=[]; proximoIdCliente=1; proximoIdEvento=1; salvarDados(); atualizarSelectClientes(); atualizarAgenda(); listarClientes(); listarEventos(); mostrarAlerta("Dados limpos!","success"); } }
+        function fazerBackup(){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify({clientes,eventos,proximoIdCliente,proximoIdEvento,perfilAnimador},null,2)],{type:'application/json'})); a.download=`backup_${Date.now()}.json`; a.click(); mostrarAlerta("Backup gerado!","success"); }
+        function restaurarBackup(){ const file=document.getElementById('restoreFile').files[0]; if(!file){mostrarAlerta("Selecione um arquivo","error"); return;} const reader=new FileReader(); reader.onload=function(e){ try{ const d=JSON.parse(e.target.result); clientes=d.clientes||[]; eventos=d.eventos||[]; proximoIdCliente=d.proximoIdCliente||1; proximoIdEvento=d.proximoIdEvento||1; if(d.perfilAnimador){ perfilAnimador=d.perfilAnimador; salvarPerfil(); } salvarDados(); atualizarSelectClientes(); atualizarAgenda(); listarClientes(); listarEventos(); mostrarAlerta("Backup restaurado!","success"); } catch(err){ mostrarAlerta("Arquivo inválido!","error"); } }; reader.readAsText(file); }
+        
+        function adicionarServico(){ const s=document.getElementById('selectNovoServico').value; if(s&&!servicosSelecionados.includes(s)){ servicosSelecionados.push(s); atualizarListaServicos(); } }
+        function removerServico(i){ servicosSelecionados.splice(i,1); atualizarListaServicos(); }
+        function atualizarListaServicos(){ const c=document.getElementById('listaServicos'); if(!servicosSelecionados.length){ c.innerHTML='<p>Nenhum serviço</p>'; } else{ let html=''; servicosSelecionados.forEach((s,i)=>{ html+=`<span class="servico-tag">${s} <span class="remove-servico" onclick="removerServico(${i})">✕</span></span>`; }); c.innerHTML=html; document.getElementById('servicosContratados').value=servicosSelecionados.join(', '); } }
+        function adicionarServicoEdit(){ const s=document.getElementById('editSelectNovoServico').value; if(s&&!servicosSelecionadosEdit.includes(s)){ servicosSelecionadosEdit.push(s); atualizarListaServicosEdit(); } }
+        function removerServicoEdit(i){ servicosSelecionadosEdit.splice(i,1); atualizarListaServicosEdit(); }
+        function atualizarListaServicosEdit(){ const c=document.getElementById('editListaServicos'); if(!servicosSelecionadosEdit.length){ c.innerHTML='<p>Nenhum serviço</p>'; } else{ let html=''; servicosSelecionadosEdit.forEach((s,i)=>{ html+=`<span class="servico-tag">${s} <span class="remove-servico" onclick="removerServicoEdit(${i})">✕</span></span>`; }); c.innerHTML=html; document.getElementById('editServicosContratados').value=servicosSelecionadosEdit.join(', '); } }
+        function abrirModalEditCliente(id){ const c=clientes.find(c=>c.id===id); if(c){ document.getElementById('editClienteId').value=c.id; document.getElementById('editNomeCliente').value=c.nome; document.getElementById('editCpfCliente').value=c.cpf_cnpj; document.getElementById('editTelefoneCliente').value=c.telefone; document.getElementById('editEmailCliente').value=c.email; document.getElementById('editEnderecoCliente').value=c.endereco; document.getElementById('editCidadeCliente').value=c.cidade; document.getElementById('editEstadoCliente').value=c.estado; document.getElementById('editNomeCrianca').value=c.nome_crianca||''; document.getElementById('modalEditCliente').style.display='block'; } }
+        function salvarEdicaoCliente(e){ e.preventDefault(); const id=parseInt(document.getElementById('editClienteId').value); const idx=clientes.findIndex(c=>c.id===id); if(idx!==-1){ clientes[idx]={...clientes[idx], nome:document.getElementById('editNomeCliente').value.toUpperCase(), cpf_cnpj:document.getElementById('editCpfCliente').value, telefone:document.getElementById('editTelefoneCliente').value, email:document.getElementById('editEmailCliente').value, endereco:document.getElementById('editEnderecoCliente').value, cidade:document.getElementById('editCidadeCliente').value.toUpperCase(), estado:document.getElementById('editEstadoCliente').value.toUpperCase(), nome_crianca:document.getElementById('editNomeCrianca').value}; salvarDados(); listarClientes(); atualizarSelectClientes(); atualizarAgenda(); fecharModalEditCliente(); mostrarAlerta("Cliente atualizado!","success"); } }
+        function fecharModalEditCliente(){ document.getElementById('modalEditCliente').style.display='none'; }
+        function abrirModalEditEvento(id){ const e=eventos.find(e=>e.id===id); if(e){ servicosSelecionadosEdit=e.servicos?e.servicos.split(', ').map(s=>s.trim()):[]; atualizarListaServicosEdit(); document.getElementById('editEventoId').value=e.id; document.getElementById('editNomeEvento').value=e.nome_evento; document.getElementById('editEnderecoEvento').value=e.endereco_evento; document.getElementById('editCidadeEvento').value=e.cidade_evento; document.getElementById('editEstadoEvento').value=e.estado_evento; document.getElementById('editDataEvento').value=e.data_evento; document.getElementById('editHoraEvento').value=e.hora_evento; document.getElementById('editQtdHoras').value=e.qtd_horas; document.getElementById('editValorServico').value=e.valor; document.getElementById('editStatusEvento').value=e.status; document.getElementById('editObservacoes').value=e.observacoes||''; document.getElementById('modalEditEvento').style.display='block'; } }
+        function salvarEdicaoEvento(e){ e.preventDefault(); const id=parseInt(document.getElementById('editEventoId').value); const idx=eventos.findIndex(ev=>ev.id===id); if(idx!==-1){ eventos[idx]={...eventos[idx], nome_evento:document.getElementById('editNomeEvento').value.toUpperCase(), servicos:document.getElementById('editServicosContratados').value, endereco_evento:document.getElementById('editEnderecoEvento').value, cidade_evento:document.getElementById('editCidadeEvento').value.toUpperCase(), estado_evento:document.getElementById('editEstadoEvento').value.toUpperCase(), data_evento:document.getElementById('editDataEvento').value, hora_evento:document.getElementById('editHoraEvento').value, qtd_horas:parseFloat(document.getElementById('editQtdHoras').value), valor:parseFloat(document.getElementById('editValorServico').value), status:document.getElementById('editStatusEvento').value, observacoes:document.getElementById('editObservacoes').value}; salvarDados(); listarEventos(); atualizarAgenda(); atualizarSelectEventosContrato(); fecharModalEditEvento(); mostrarAlerta("Evento atualizado!","success"); } }
+        function fecharModalEditEvento(){ document.getElementById('modalEditEvento').style.display='none'; }
+        function confirmarExclusaoEvento(id,nome){ itemParaExcluir={tipo:'evento',id}; document.getElementById('mensagemConfirm').innerHTML=`Excluir "${nome}"?`; document.getElementById('modalConfirm').style.display='block'; }
+        function confirmarExclusaoCliente(id,nome){ if(eventos.some(e=>e.cliente.id===id)){ mostrarAlerta(`Cliente possui eventos!`,"error"); return; } itemParaExcluir={tipo:'cliente',id}; document.getElementById('mensagemConfirm').innerHTML=`Excluir "${nome}"?`; document.getElementById('modalConfirm').style.display='block'; }
+        function executarExclusao(){ if(itemParaExcluir.tipo==='evento') eventos=eventos.filter(e=>e.id!==itemParaExcluir.id); else if(itemParaExcluir.tipo==='cliente') clientes=clientes.filter(c=>c.id!==itemParaExcluir.id); salvarDados(); listarClientes(); listarEventos(); atualizarSelectClientes(); atualizarSelectEventosContrato(); atualizarAgenda(); fecharModalConfirm(); mostrarAlerta("Excluído!","success"); }
+        function fecharModalConfirm(){ document.getElementById('modalConfirm').style.display='none'; itemParaExcluir={tipo:null,id:null}; }
+
+        document.getElementById('formCliente').addEventListener('submit', cadastrarCliente);
+        document.getElementById('formEvento').addEventListener('submit', cadastrarEvento);
+        document.getElementById('formEditCliente').addEventListener('submit', salvarEdicaoCliente);
+        document.getElementById('formEditEvento').addEventListener('submit', salvarEdicaoEvento);
+        document.getElementById('btnConfirmarSim').addEventListener('click', executarExclusao);
+        document.getElementById('btnConfirmarNao').addEventListener('click', fecharModalConfirm);
+        document.getElementById('formPerfil').addEventListener('submit', salvarPerfilForm);
+        
+        function initSistema() { carregarDados(); atualizarSelectClientes(); atualizarAgenda(); }
+    </script>
+</body>
+</html>
